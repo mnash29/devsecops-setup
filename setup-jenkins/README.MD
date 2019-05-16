@@ -9,25 +9,25 @@ Jenkins is a self-contained Java-based program, ready to run out-of-the-box, wit
 	- Security Group with Port `8080` open for internet
 - Java v1.8.x 
 
-## Install Java
+## Install Java and Git
 - Lets install java and set the java home
 ```sh
 yum -y update
 yum -y install java-1.8*
+yum -y install git
 ```
 
 ### Configure Java_Home and Check Version
 ```sh
-vi ~/.bashrc # or whatever file manages user specified values
+vi ~/.bash_profile
 JAVA_HOME=/usr/lib/jvm/java
 
 export JAVA_HOME
 
 # To set it permanently update your .bash_profile
-source ~/.bashrc
+source ~/.bash_profile
 java -version
 ```
-
 _The output should be something like this,_
 ```
 [root@~]# java -version
@@ -171,32 +171,31 @@ On the master instance, log in to the Jenkins management dashboard, choose `Mana
 After you have configured your worker nodes, it’s important to change the number of executors to 0 on the master. Select the master from the nodes table, and configure the “# of executors” settings to 0. This ensures that project builds will now happen on the worker nodes, and not on the master.
 Test your Jenkins setup by adding a new project and performing a build.
 
-#  Install & configure Maven build tool on Jenkins
+#  Install & configure Maven build tool
 Maven is a code build tool which used to convert your code to artifact. this is widely used plugin to build in continuous integration
 
 #### Prerequisites
-- Jenkins worker EC2 Amazon Linux 2 x64 t2.micro Instance
+- Jenkins master/worker EC2 Amazon Linux 2 x64 t2.micro Instance
 	- With Internet Access
 	- Security Group with Port `8080` open for internet
 - Java v1.8.x 
 
-#### Install Maven on Jenkins
-Download maven packages https://maven.apache.org/download.cgi onto Jenkins server. In this case I am using /opt/maven as my installation directory
-- Link : https://maven.apache.org/download.cgi
+#### Install Maven on Jenkins and Jenkins Worker
+Copy link to maven tar.gz packages at https://maven.apache.org/download.cgi onto Jenkins server. In this case I am using /opt/maven as my installation directory
 ```sh
   # Creating maven directory under /opt
   mkdir /opt/maven
   cd /opt/maven
-  # downloading maven version 3.6.0
-  wget http://mirrors.fibergrid.in/apache/maven/maven-3/3.6.0/binaries/apache-maven-3.6.0-bin.zip
-  unzip /opt/maven/apache-maven-3.6.0-bin.zip
+  # paste link to download maven version 3.x.x
+  wget http://mirror.cc.columbia.edu/pub/software/apache/maven/maven-3/3.x.x/binaries/apache-maven-3.x.x-bin.tar.gz
+  tar -xzvf apache-maven-3.x.x-bin.tar.gz
  ```
-Setup M2_HOME and M2 paths in .bash_profile of user and add these to path variable
+Setup M2_HOME and M2 paths in .bash_profile
 ```sh
   vi ~/.bash_profile
-  M2_HOME=/opt/maven/apache-maven-3.6.0
+  M2_HOME=/opt/maven/apache-maven-3.x.x
   M2=$M2_HOME/bin
-  PAHT=<Existing_PATH>:$M2_HOME:$M2
+  PATH=$PATH:$M2_HOME:$M2
 ```
 #### Check point 
 logoff and login to check maven version
