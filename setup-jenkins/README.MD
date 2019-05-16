@@ -4,20 +4,19 @@ Jenkins is a self-contained Java-based program, ready to run out-of-the-box, wit
 ### Follow this article in **[Youtube](https://youtu.be/-0dkiteJEuE)**
 
 ### Prerequisites
-1. EC2 Amazon Linux 2 x64 t2.micro Instance
-   - With Internet Access
-   - Security Group with Port `8080` open for internet
-1. Java v1.8.x 
+- EC2 Amazon Linux 2 x64 t2.micro Instance
+	- With Internet Access
+	- Security Group with Port `8080` open for internet
+- Java v1.8.x 
 
 ## Install Java
-We will be using open java for our demo, Get latest version from http://openjdk.java.net/install/
+- Lets install java and set the java home
 ```sh
 yum -y update
 yum -y install java-1.8*
 ```
 
 ### Configure Java_Home and Check Version
-Lets install java and set the java home
 ```sh
 vi ~/.bashrc # or whatever file manages user specified values
 JAVA_HOME=/usr/lib/jvm/java
@@ -38,8 +37,8 @@ OpenJDK 64-Bit Server VM (build 25.151-b12, mixed mode)
 ```
 
 ## Install Jenkins
-You can install jenkins using the rpm or by setting up the repo. We will setup the repo so that we can update it easily in future.
-Get latest version of jenkins from https://pkg.jenkins.io/redhat-stable/
+- You can install jenkins using the rpm or by setting up the repo. We will setup the repo so that we can update it easily in future.
+- Get latest version of jenkins from https://pkg.jenkins.io/redhat-stable/
 ```sh
 yum -y install wget
 wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
@@ -54,7 +53,7 @@ sudo service jenkins start
 ```
 
 #### Accessing Jenkins
-By default jenkins runs at port `8080`, You can access jenkins at
+- By default jenkins runs at port `8080`, You can access jenkins at
 ```sh
 http://YOUR-AWS-IPv4-PUBLIC-IP:8080
 ```
@@ -67,13 +66,13 @@ http://YOUR-AWS-IPv4-PUBLIC-IP:8080
 
 ### Test Jenkins Jobs (optional)
 1. Create “new item”
-1. Enter an item name – `My-First-Project`
+2. Enter an item name – `My-First-Project`
    - Chose `Freestyle` project
-1. Under Build section
+3. Under Build section
 	Execute shell : echo "Welcome to Jenkins Demo"
-1. Save your job 
-1. Build job
-1. Check "console output"
+4. Save your job 
+5. Build job
+6. Check "console output"
 
 # Security Considerations AWS Whitepaper
 
@@ -171,3 +170,44 @@ On the master instance, log in to the Jenkins management dashboard, choose `Mana
 
 After you have configured your worker nodes, it’s important to change the number of executors to 0 on the master. Select the master from the nodes table, and configure the “# of executors” settings to 0. This ensures that project builds will now happen on the worker nodes, and not on the master.
 Test your Jenkins setup by adding a new project and performing a build.
+
+#  Install & configure Maven build tool on Jenkins
+Maven is a code build tool which used to convert your code to artifact. this is widely used plugin to build in continuous integration
+
+#### Prerequisites
+- Jenkins worker EC2 Amazon Linux 2 x64 t2.micro Instance
+	- With Internet Access
+	- Security Group with Port `8080` open for internet
+- Java v1.8.x 
+
+#### Install Maven on Jenkins
+Download maven packages https://maven.apache.org/download.cgi onto Jenkins server. In this case I am using /opt/maven as my installation directory
+- Link : https://maven.apache.org/download.cgi
+```sh
+  # Creating maven directory under /opt
+  mkdir /opt/maven
+  cd /opt/maven
+  # downloading maven version 3.6.0
+  wget http://mirrors.fibergrid.in/apache/maven/maven-3/3.6.0/binaries/apache-maven-3.6.0-bin.zip
+  unzip /opt/maven/apache-maven-3.6.0-bin.zip
+ ```
+Setup M2_HOME and M2 paths in .bash_profile of user and add these to path variable
+```sh
+  vi ~/.bash_profile
+  M2_HOME=/opt/maven/apache-maven-3.6.0
+  M2=$M2_HOME/bin
+  PAHT=<Existing_PATH>:$M2_HOME:$M2
+```
+#### Check point 
+logoff and login to check maven version
+Check maven version 
+```sh
+  mvn –version
+```
+So far you have completed installation of maven software to support maven plugin on jenkins console. Let's jump onto jenkins to complete remining steps. 
+#### Setup maven on jenkins console
+- Install maven plugin without restart  
+  - `Manage Jenkins` > `Jenkins Plugins` > `available` > `Maven Invoker`
+
+- Configure java path
+  - `Manage Jenkins` > `Global Tool Configuration` > `Maven`
