@@ -162,11 +162,17 @@ On the master instance, log in to the Jenkins management dashboard, choose `Mana
 1. Name your node and choose `Permanent Agent`. Then choose `OK` to continue. (If you have already configured a worker node, you can choose `Copy Existing Node` to duplicate a previous configuration.)
 2. Add a description and set the number of executors you wish to run on the worker node. Plan for two executors per core.
 3. Set `Remote Root Directory` to an absolute path, such as /home/ec2-user/jenkins. The remote root directory will cache data such as tool installations or build workspaces. This prevents unnecessary downloading of tools, or checking out source code again when builds start to run on this agent again after a reboot. Set any other options you want.
-4. For the launch method, choose `Launch slave agents on Unix machines via SSH` and set the host to the private IP address of your worker node.
+4. For the launch method, choose `Launch agent agents via SSH` and set the host to the private IP address of your worker node.
 5. Add your credentials by choosing `Add`, then `SSH Username with private key`.
 6. Add the value “ec2-user” for `Username`.
 7. For Private Key, choose `Enter directly`, then paste in the value of the private key (~/.ssh/id_rsa) from the master instance, and choose `Add`. Finally, choose `Save` to save your worker node configuration.
 8. Select the worker from the nodes table, and then choose `Launch agent`.
+9. If connection throws `no /var/lib/jenkins/.ssh/known_hosts file` error:
+```sh
+# Create ssh directory on master node and copy known_hosts file 
+mkdir /var/lib/jenkins/.ssh
+cp .ssh/known_hosts /var/lib/jenkins/.ssh/
+```
 
 After you have configured your worker nodes, it’s important to change the number of executors to 0 on the master. Select the master from the nodes table, and configure the “# of executors” settings to 0. This ensures that project builds will now happen on the worker nodes, and not on the master.
 Test your Jenkins setup by adding a new project and performing a build.
