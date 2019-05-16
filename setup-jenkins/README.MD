@@ -4,7 +4,7 @@ Jenkins is a self-contained Java-based program, ready to run out-of-the-box, wit
 ### Follow this article in **[Youtube](https://youtu.be/-0dkiteJEuE)**
 
 ### Prerequisites
-1. EC2 Amazon Linux x64 t2.micro Instance
+1. EC2 Amazon Linux 2 x64 t2.micro Instance
    - With Internet Access
    - Security Group with Port `8080` open for internet
 1. Java v1.8.x 
@@ -12,21 +12,23 @@ Jenkins is a self-contained Java-based program, ready to run out-of-the-box, wit
 ## Install Java
 We will be using open java for our demo, Get latest version from http://openjdk.java.net/install/
 ```sh
-yum install java-1.8*
-#yum -y install java-1.8.0-openjdk
+yum -y update
+yum -y install java-1.8*
 ```
 
-### Confirm Java Version
+### Configure Java_Home and Check Version
 Lets install java and set the java home
 ```sh
-java -version
-find /usr/lib/jvm/java-1.8* | head -n 3
-#JAVA_HOME=
+vi ~/.bashrc # or whatever file manages user specified values
+JAVA_HOME=/usr/lib/jvm/java
+
 export JAVA_HOME
-PATH=$PATH:$JAVA_HOME
+
 # To set it permanently update your .bash_profile
-source ~/.bash_profile
+source ~/.bashrc
+java -version
 ```
+
 _The output should be something like this,_
 ```
 [root@~]# java -version
@@ -54,20 +56,16 @@ sudo service jenkins start
 #### Accessing Jenkins
 By default jenkins runs at port `8080`, You can access jenkins at
 ```sh
-http://YOUR-SERVER-PUBLIC-IP:8080
+http://YOUR-AWS-IPv4-PUBLIC-IP:8080
 ```
 #### Configure Jenkins
 - The default Username is `admin`
 - Grab the default password 
   - Password Location:`/var/lib/jenkins/secrets/initialAdminPassword`
-- `Skip` Plugin Installation; _We can do it later_
 - Change admin password
   - `Admin` > `Configure` > `Password`
-- Configure `java` path
-  - `Manage Jenkins` > `Global Tool Configuration` > `JDK`  
-- Create another admin user id
 
-### Test Jenkins Jobs
+### Test Jenkins Jobs (optional)
 1. Create “new item”
 1. Enter an item name – `My-First-Project`
    - Chose `Freestyle` project
@@ -76,3 +74,100 @@ http://YOUR-SERVER-PUBLIC-IP:8080
 1. Save your job 
 1. Build job
 1. Check "console output"
+
+# Security Considerations AWS Whitepaper
+
+At a minimum, incoming traffic to the Jenkins master should be locked down to the specific IP address
+ranges from which you expect traffic. Additionally, your environment can be further secured using the
+following methods.
+
+## Enable SSL
+
+Secure Sockets Layer/Transport Layer Security (SSL/TLS) certificates can be used to secure network
+communications and establish the identity of websites over the Internet. You can make this easy by fronting your Jenkins master with the ELB load balancer. In that case, you can use the `AWS Certificate Manager` to easily provision a certificate that gives you encrypted network connections and protects your
+data as it travels across the wire.
+
+## CSRF Protection
+
+Cross-site request forgery (CSRF) is a class of attack that forces an end user to execute unwanted actions
+on Jenkins. By default, Jenkins 2.x installations have the CSRF protection option enabled. To check the
+status of this setting, choose `Manage Jenkins`, then `Configure Global Security`, and ensure that Prevent
+Cross-Site Request Forgery Exploits is enabled.
+
+## Security Implication of Building on Master
+
+Care should be taken not to perform builds on the master. As you see in the following configuration
+steps, we recommend that you configure the master to have no executors, and that you run builds
+only on worker nodes. Builds that are run on the master have the ability to read and modify files in
+$JENKINS_HOME, which, if accessed maliciously, can affect the entire Jenkins installation and the
+security of your system.
+
+## Worker Node Access Control
+
+Jenkins versions 1.5.80.x and later have a subsystem in place that establishes a barrier between worker
+nodes and a master to safely allow less trusted worker nodes to be connected to a master.
+
+Your Jenkins 2.x installation should have this barrier enabled by default. You can verify this by visiting
+“Manage Jenkins,” then “Configure Global Security,” and ensuring that “Enable Slave->Master Access
+Control” is enabled
+
+## Configure User Authentication
+
+During the installation process, you can choose to create a First Admin User. Create a master user that
+can be used to create other groups and users, and then proceed to the Jenkins dashboard.
+
+User authentication can be provided through a number of methods:
+- The simplest authentication scheme is to use the Jenkins user database. User accounts can be created
+using the Jenkins dashboard (choose `Manage Jenkins`, then `Configure Global Security`).
+	- The option for Matrix-based security offers the most precise control over user privileges. Using this
+option you can specify fine-grained permissions for each user and each action they can take.
+- If Jenkins is running on a Windows machine, you can configure Jenkins to authenticate the user name
+and the password through Active Directory using the `Active Directory plugin`.
+- If Jenkins is running on Linux, the same Active Directory plugin can be used by specifying the Active
+Directory domains to authenticate with, or you can configure access to Unix users/groups in your
+local system. With this setting, users will be logged into Jenkins by entering their Unix username and
+password.
+- With the `LDAP plugin`, users can authenticate with an Active Directory-compliant LDAP service such as
+`AWS Directory Service` or `OpenLDAP`.
+
+# Worker Node
+
+### Prerequisites
+- EC2 Amazon Linux 2 x64 t2.micro Instance
+	- With Internet Access
+	- Security Group with Port `8080` open for internet
+- Java v1.8.x 
+
+### Connect to master instance via ssh
+
+1. Create a pair of authentication keys from the ~/.ssh directory
+```sh
+cd ~/.ssh
+ssh-keygen -t rsa
+# accept all defaults
+```
+2. Copy the public key
+```sh
+cat ~/.ssh/id_rsa.pub
+```
+3. From another terminal window, connect to the worker instance via SSH.
+4. Edit ~/.ssh/authorized keys and add the contents of the public key from step 5 to the end of the file. Take care not to include any line breaks that you may have copied as you captured the public key.
+5. Return to the terminal where you connected to the master instance via SSH, and verify that you can connect to the worker instance the same way.
+```sh
+ssh ec2-user@YOUR-AWS-IPv4-PUBLIC-IP
+```
+
+## Configuration
+
+On the master instance, log in to the Jenkins management dashboard, choose `Manage Jenkins`, then `Manage Nodes`, and finally `New Node`. For each worker node, perform the following steps:
+1. Name your node and choose `Permanent Agent`. Then choose `OK` to continue. (If you have already configured a worker node, you can choose `Copy Existing Node` to duplicate a previous configuration.)
+2. Add a description and set the number of executors you wish to run on the worker node. Plan for two executors per core.
+3. Set `Remote Root Directory` to an absolute path, such as /home/ec2-user/jenkins. The remote root directory will cache data such as tool installations or build workspaces. This prevents unnecessary downloading of tools, or checking out source code again when builds start to run on this agent again after a reboot. Set any other options you want.
+4. For the launch method, choose `Launch slave agents on Unix machines via SSH` and set the host to the private IP address of your worker node.
+5. Add your credentials by choosing `Add`, then `SSH Username with private key`.
+6. Add the value “ec2-user” for `Username`.
+7. For Private Key, choose `Enter directly`, then paste in the value of the private key (~/.ssh/id_rsa) from the master instance, and choose `Add`. Finally, choose `Save` to save your worker node configuration.
+8. Select the worker from the nodes table, and then choose `Launch agent`.
+
+After you have configured your worker nodes, it’s important to change the number of executors to 0 on the master. Select the master from the nodes table, and configure the “# of executors” settings to 0. This ensures that project builds will now happen on the worker nodes, and not on the master.
+Test your Jenkins setup by adding a new project and performing a build.

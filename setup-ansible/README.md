@@ -8,14 +8,10 @@ Ansible is an open source automation platform. It is very, very simple to setup 
 
 ### Installation steps:
 
-Add a EPEL (Extra Packages for Enterprise Linux)third party repository to get packages for Ansible 
+Install Ansible on AWS Linux 2
 ```sh 
-rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-```
-
-Install Ansible
-```sh 
-yum install ansible -y 
+sudo rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+sudo yum -y install ansible
 ```
 
 Check Ansible version 
@@ -39,6 +35,7 @@ Using keybased authentication is advised. If you are still at learning stage use
 ``` 
 Login as a ansadmin user on master and generate ssh key (Master)
 ```sh 
+sudo su ansadmin
 ssh-keygen
 ```
 Copy keys onto all ansible client nodes (Master)
